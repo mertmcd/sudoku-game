@@ -44,17 +44,13 @@ export default defineComponent({
 
 <style lang="postcss" >
 .my-grid {
-  margin: auto;
   display: grid;
-  /* align-content: center;
-  justify-items: center; */
   @apply grid-rows-3;
   @apply grid-cols-3;
 }
 
 .game-board {
-  @apply my-grid;
-  @apply border-2 border-blue-900;
+  @apply my-grid mx-auto border-4 border-blue-900;
 
   height: calc(100vw + 6px);
   width: 100vw;
@@ -71,10 +67,7 @@ export default defineComponent({
 }
 
 .grid-square {
-  @apply my-grid;
-  /* row-gap: 1px;
-  column-gap: 1px; */
-  @apply border border-slate-500;
+  @apply my-grid m-0 border-2 border-blue-900;
 }
 
 .grid-square-4 {

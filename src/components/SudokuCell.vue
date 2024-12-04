@@ -46,7 +46,7 @@ export default defineComponent({
   >
     <template v-if="showPencilValues">
       <span
-        class="text-xs"
+        class="text-xs italic"
         :class="{ invisible: !v, highlighted: (n + 1 == highlightedValue) }"
         v-for="(v, n) in pencil"
       >{{ (n + 1) }}</span>
@@ -58,12 +58,13 @@ export default defineComponent({
 <style lang="postcss">
 .cell {
   @apply text-3xl;
+  line-height: 3.25rem;
 
   width: 11vw;
   height: 11vw;
   max-height: 50px;
   max-width: 50px;
-  @apply border border-blue-900;
+  @apply border-2 border-blue-900;
   @apply font-medium;
   @apply cursor-pointer;
 
