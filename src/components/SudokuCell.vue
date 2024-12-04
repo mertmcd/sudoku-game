@@ -1,8 +1,9 @@
 <script lang="ts">
-import { defineComponent, PropType } from 'vue'
+import { defineComponent, PropType, computed } from 'vue'
 import CellState from '../models/CellState';
 
 export default defineComponent({
+  name: 'SudokuCell',
   props: {
     cell: {
       type: Object as PropType<CellState>,
@@ -17,40 +18,50 @@ export default defineComponent({
     },
     isSelected: Boolean,
   },
-  setup() {
+  setup(props, { emit }) {
+    // Computed property to determine if draft values should be displayed
+    const showDraftValues = computed(() => {
+      return props.cell.cellValue === null && props.draft.some(v => v);
+    });
 
-  },
-  computed: {
-    showDraftValues() {
-      return this.cell.cellValue === null && this.draft.some(v => v);
-    }
-  },
+    // Event emitter for cell select action
+    const onCellSelect = () => {
+      emit('onCellSelect');
+    };
 
-})
+    return {
+      showDraftValues,
+      onCellSelect,
+    };
+  },
+});
 </script>
 
 <template>
   <div
-    @click="$emit('onCellSelect')"
+    @click="onCellSelect"
     :class="{
       cell: true,
-      filled: cell.cellValue != null,
-      highlighted: highlightedValue != null && cell.cellValue === highlightedValue,
+      filled: cell.cellValue !== null,
+      highlighted: highlightedValue !== null && cell.cellValue === highlightedValue,
       selected: isSelected,
       wrong: cell.isWrong,
       prefilled: cell.isPrefilled,
       'grid grid-cols-3 grid-rows-3': showDraftValues,
       'grid grid-cols-4 grid-rows-4': draft.length === 15 && showDraftValues,
     }"
-    class
   >
+    <!-- Draft Values Display -->
     <template v-if="showDraftValues">
       <span
         class="text-xs italic font-semibold"
-        :class="{ invisible: !v, highlighted: (n + 1 == highlightedValue) }"
+        :class="{ invisible: !v, highlighted: (n + 1 === highlightedValue) }"
         v-for="(v, n) in draft"
-      >{{ (n + 1) }}</span>
+        :key="n"
+      >{{ n + 1 }}</span>
     </template>
+
+    <!-- Cell Value Display -->
     <template v-else>{{ cell.cellValue }}</template>
   </div>
 </template>

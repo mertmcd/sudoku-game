@@ -1,62 +1,82 @@
 <template>
     <div class="countup-timer text-3xl text-center flex border-l-2 pl-4 items-center">
       <p>{{ time }}</p>
-      <button class="bg-blue-500 hover:bg-blue-700 w-20 p-2 text-base text-white text-center border-none rounded ml-4 cursor-pointer" @click="pauseTimer">{{ isPaused ? 'Resume' : 'Pause' }}</button>
+      <button
+        class="bg-blue-500 hover:bg-blue-700 w-20 p-2 text-base text-white text-center border-none rounded ml-4 cursor-pointer"
+        @click="pauseTimer"
+      >
+        {{ isPaused ? 'Resume' : 'Pause' }}
+      </button>
     </div>
   </template>
   
-  <script>
+  <script lang="ts">
+  import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
+  
   export default {
-    data() {
-      return {
-        minutes: 0,
-        seconds: 0,
-        timer: null,
-        isPaused: false,
-      };
-    },
-    computed: {
-      time() {
-        return `${this.formatTime(this.minutes)}:${this.formatTime(this.seconds)}`;
-      },
-    },
-    methods: {
-      formatTime(unit) {
-        return unit < 10 ? `0${unit}` : unit;
-      },
-      startTimer() {
-        if (this.timer) {
-          clearInterval(this.timer);
+    name: 'CountupTimer',
+    setup() {
+      const minutes = ref(0);
+      const seconds = ref(0);
+      const isPaused = ref(false);
+      const timer = ref<number | null>(null);
+  
+      const formatTime = (unit: number) => (unit < 10 ? `0${unit}` : unit.toString());
+  
+      const time = computed(() => {
+        return `${formatTime(minutes.value)}:${formatTime(seconds.value)}`;
+      });
+  
+      const startTimer = () => {
+        if (timer.value !== null) {
+          clearInterval(timer.value);
         }
   
-        this.timer = setInterval(() => {
-          if (!this.isPaused) {
-            if (this.seconds === 59) {
-              this.minutes++;
-              this.seconds = 0;
+        timer.value = window.setInterval(() => {
+          if (!isPaused.value) {
+            if (seconds.value === 59) {
+              minutes.value++;
+              seconds.value = 0;
             } else {
-              this.seconds++;
+              seconds.value++;
             }
           }
         }, 1000);
-      },
-      pauseTimer() {
-        this.isPaused = !this.isPaused;
-      },
-      resetTimer() {
-        this.minutes = 0;
-        this.seconds = 0;
-        this.isPaused = false;
-        this.startTimer();
-      }
-    },
-    mounted() {
-      //this.startTimer();
-    },
-    beforeDestroy() {
-      if (this.timer) {
-        clearInterval(this.timer);
-      }
+      };
+  
+      const pauseTimer = () => {
+        isPaused.value = !isPaused.value;
+      };
+  
+      const resetTimer = () => {
+        minutes.value = 0;
+        seconds.value = 0;
+        isPaused.value = false;
+        if (timer.value !== null) {
+          clearInterval(timer.value);
+        }
+        startTimer();
+      };
+  
+      onMounted(() => {
+        startTimer();
+      });
+  
+      onBeforeUnmount(() => {
+        if (timer.value !== null) {
+          clearInterval(timer.value);
+        }
+      });
+  
+      return {
+        minutes,
+        seconds,
+        isPaused,
+        time,
+        startTimer,
+        pauseTimer,
+        resetTimer,
+      };
     },
   };
   </script>

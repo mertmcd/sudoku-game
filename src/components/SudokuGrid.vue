@@ -1,31 +1,38 @@
 <script lang="ts">
-import { defineComponent, PropType } from "vue";
+import { defineComponent, PropType, computed } from "vue";
 import CellState from "../models/CellState";
 
 export default defineComponent({
+  name: "SudokuGrid",
   props: {
     grid: {
-      type: Object as PropType<CellState[][]>,
+      type: Array as PropType<CellState[][]>,
       required: true,
     },
     draftGrid: {
-      type: Object as PropType<(boolean[][][])>,
+      type: Array as PropType<boolean[][][]>,
       required: true,
     },
-    sudokuLevel: {
-      type: Number,
-      default: () => 3
-    }
-  }
-})
+  },
+  setup(props) {
+    const sudokuLevel = computed(() => 3);
+
+    return {
+      sudokuLevel,
+      grid: props.grid,
+      draftGrid: props.draftGrid,
+    };
+  },
+});
 </script>
 
 <template>
-  <div class="game-board mt-6" :class="{ 'game-board-4': (sudokuLevel === 4) }">
+  <div class="game-board mt-6">
+    <!-- Iterating over sudokuLevel to create 3x3 grid blocks -->
     <template v-for="(_, block_i) in sudokuLevel">
       <template v-for="(_, block_j) in sudokuLevel">
         <!-- Each block is a 3x3 -->
-        <div class="grid-square" :class="{ 'grid-square-4': (sudokuLevel === 4) }">
+        <div class="grid-square">
           <template v-for="(_, i) in sudokuLevel">
             <template v-for="(_, j) in sudokuLevel" :key="(i + '' + j)">
               <slot
@@ -42,7 +49,7 @@ export default defineComponent({
   </div>
 </template>
 
-<style lang="postcss" >
+<style lang="postcss">
 .my-grid {
   display: grid;
   @apply grid-rows-3;
@@ -58,20 +65,7 @@ export default defineComponent({
   max-height: 462px;
 }
 
-.game-board-4 {
-  @apply grid-rows-4;
-  @apply grid-cols-4;
-  height: calc(50px * 16);
-  width: calc(50px * 16);
-  /* // 462px; */
-}
-
 .grid-square {
   @apply my-grid m-0 border-2 border-blue-900;
-}
-
-.grid-square-4 {
-  @apply grid-rows-4;
-  @apply grid-cols-4;
 }
 </style>
