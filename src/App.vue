@@ -4,23 +4,19 @@ import type { Ref } from 'vue';
 import CellState from './models/CellState';
 import SudokuCell from './components/SudokuCell.vue';
 import SudokuGrid from './components/SudokuGrid.vue';
-
 import PuzzleSet from './models/SudokuPuzzleSet.json';
+import './assets/main.css';
 
 export default defineComponent({
   components: {
     SudokuCell,
     SudokuGrid
   },
-  /**
-   * Will be using setup to define data and computed values
-   * I am using this instead of Data so that I can more easily initialize the values along with ts-types
-   */
-  setup() {
 
+  setup() {
     const sudokuLevel = ref(3); // n
     const gridSize = computed(() => sudokuLevel.value ** 2); // n*n
-    const difficulty: Ref<("medium" | "extreme")> = ref("medium");
+    const level: Ref<("medium" | "extreme")> = ref("medium");
 
     const grid: Ref<CellState[][]> = ref(
       Array(gridSize.value)
@@ -51,17 +47,19 @@ export default defineComponent({
       pencilGrid,
       grid,
       gridSize,
-      difficulty,
+      level,
       selected: selectedIndexes,
       isSelecting,
       pencilMode,
       selectedValue,
     }
   },
+
   mounted() {
     this.registerKeyboardEvents();
     this.newGame();
   },
+
   methods: {
     registerKeyboardEvents() {
       const ALLOWED_KEYS: { [key: string]: number | null } = {
@@ -124,15 +122,15 @@ export default defineComponent({
         }
       });
     },
-    generateSudoku(difficulty: ("extreme" | "medium")): number[] {
 
-      const puzzle = PuzzleSet[difficulty][Math.floor(Math.random() * PuzzleSet[difficulty].length)] as number[];
-
+    generateSudoku(level: ("extreme" | "medium")): number[] {
+      const puzzle = PuzzleSet[level][Math.floor(Math.random() * PuzzleSet[level].length)] as number[];
       return puzzle;
     },
+
     newGame(): void {
       this.clearAll();
-      const puzzle: number[] = this.generateSudoku(this.difficulty);
+      const puzzle: number[] = this.generateSudoku(this.level);
 
       this.grid = Array(this.gridSize)
         .fill(null).map((_, i) =>
@@ -141,6 +139,7 @@ export default defineComponent({
           )
         );
     },
+
     togglePencilMode(): void {
       this.pencilMode = !this.pencilMode;
     },
@@ -153,7 +152,6 @@ export default defineComponent({
 
     judgeCell(i: number, j: number): boolean {
       let hasError = false;
-
       const value = this.grid[i][j].cellValue;
 
       if (value == null) {
@@ -261,11 +259,8 @@ export default defineComponent({
 
     togglePencilGridValue(i: number, j: number, n: number): void {
       const row = this.pencilGrid[i].slice(0);
-
       const arr = row[j].slice(0);
-
       arr[n - 1] = !arr[n - 1];
-
       row[j] = arr;
       this.pencilGrid[i] = row;
     },
@@ -290,6 +285,7 @@ export default defineComponent({
         this.assignCell(i + 1);
       }
     },
+
     quickPencilAll() {
       const savedMode = this.pencilMode;
       for (let i = 0; i < this.gridSize; i++) {
@@ -303,8 +299,8 @@ export default defineComponent({
 
       this.pencilMode = savedMode;
     },
-    updatePencilGridValues(i: number, j: number, n: number): void {
 
+    updatePencilGridValues(i: number, j: number, n: number): void {
       for (let k = 0; k < this.gridSize; k++) {
         if (this.pencilGrid[i][k][n - 1]) {
           this.togglePencilGridValue(i, k, n);
@@ -313,7 +309,6 @@ export default defineComponent({
         if (this.pencilGrid[k][j][n - 1]) {
           this.togglePencilGridValue(k, j, n);
         }
-
       }
       // Judge current square
       const startI = i - i % this.sudokuLevel;
@@ -331,6 +326,7 @@ export default defineComponent({
       }
 
     },
+
     assignCell(n: number | null): void {
       const i = this.selected[0]
       const j = this.selected[1]
@@ -387,35 +383,29 @@ export default defineComponent({
 <template>
   <div class="container m-auto">
     <h1 class="text-2xl font-bold underline mb-3">Sudoku {{ gridSize }} x {{ gridSize }}</h1>
-    <div class="flex flex-col-reverse md:flex-row h-full">
+    <div class="flex flex-col-reverse md:flex-col h-full">
       <!-- Sidebar -->
-      <div class="md:basis-1/4 md:border-r">
-        <div class="flex flex-col px-10">
+      <div class="md:basis-1/4 md:border">
+        <div class="flex flex-row px-10">
           <button
-            class="mt-5"
+            class="mx-2"
             :class="{ 'button-dark': pencilMode, 'button': !pencilMode }"
             @click="togglePencilMode"
-          >Pencil mode {{ pencilMode ? 'On' : 'Off' }}</button>
-          <div class="mt-5">
-            <label for="difficulty">Difficulty :</label>
-            <select v-model="difficulty">
+          >Draft Mode: {{ pencilMode ? 'On' : 'Off' }}</button>
+          <div class="mx-2">
+            <label for="level">Level :</label>
+            <select v-model="level">
               <option value="medium">Medium</option>
               <option value="extreme">Extreme</option>
             </select>
           </div>
-          <button class="button-dark mt-5" @click="newGame">New Game</button>
+          <button class="bg- mx-2" @click="newGame">New Game</button>
 
-          <button class="button-dark mt-5" @click="clearAll">Clear all</button>
-          <div class="w-full text-left mt-2 hidden md:block">
-            <kbd>Space</kbd> Toggle pencil mode On/Off
-            <br />
-            <kbd>Del</kbd> &nbsp;&nbsp; Delete Cell value
-            <br />
-            <kbd>Alt</kbd> &nbsp;&nbsp; Quick fill cell with pencil
-            <br />
-          </div>
-          <button class="button-dark mt-5" @click="quickPencilAll">Quick Pencil All</button>
-          (Fill with pencil all possible values)
+          <button class="button-dark mx-2" @click="clearAll">Clear all</button>
+          <button class="button-dark mx-2" @click="quickPencilAll">Quick Pencil All
+          </button>
+          <span>(Fill with pencil all possible values)</span>
+          
         </div>
       </div>
       <!-- Sudoku Grid -->

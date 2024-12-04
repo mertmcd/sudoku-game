@@ -63,15 +63,15 @@ export default defineComponent({
   height: 11vw;
   max-height: 50px;
   max-width: 50px;
-  @apply border border-slate-900;
+  @apply border border-blue-900;
   @apply font-medium;
   @apply cursor-pointer;
 
 }
 
 .cell.selected {
-  @apply bg-yellow-300;
-  @apply border-2 border-yellow-100;
+  @apply bg-gray-200;
+  @apply border-2 border-gray-300;
 }
 
 .cell.filled {

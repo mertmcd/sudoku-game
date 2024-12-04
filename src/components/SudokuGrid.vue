@@ -54,7 +54,7 @@ export default defineComponent({
 
 .game-board {
   @apply my-grid;
-  @apply border-2 border-slate-500;
+  @apply border-2 border-blue-900;
 
   height: calc(100vw + 6px);
   width: 100vw;
