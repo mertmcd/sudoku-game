@@ -4,13 +4,15 @@ import type { Ref } from 'vue';
 import CellState from './models/CellState';
 import SudokuCell from './components/SudokuCell.vue';
 import SudokuGrid from './components/SudokuGrid.vue';
+import CountupTimer from './components/CountupTimer.vue';
 import PuzzleSet from './models/SudokuPuzzleSet.json';
 import './assets/main.css';
 
 export default defineComponent({
   components: {
     SudokuCell,
-    SudokuGrid
+    SudokuGrid,
+    CountupTimer,
   },
 
   setup() {
@@ -27,11 +29,11 @@ export default defineComponent({
         )
     );
 
-    const pencilGrid: Ref<boolean[][][]> = ref(Array(gridSize.value).fill(Array(gridSize.value).fill(Array(9).fill(false))))
+    const draftGrid: Ref<boolean[][][]> = ref(Array(gridSize.value).fill(Array(gridSize.value).fill(Array(9).fill(false))))
 
     const selectedIndexes = ref([-1, -1])
 
-    const pencilMode = ref(false);
+    const draftMode = ref(false);
 
     const isSelecting = computed(() => (selectedIndexes.value[0] >= 0
       && selectedIndexes.value[0] < gridSize.value
@@ -44,13 +46,13 @@ export default defineComponent({
 
     return {
       sudokuLevel,
-      pencilGrid,
+      draftGrid,
       grid,
       gridSize,
       level,
       selected: selectedIndexes,
       isSelecting,
-      pencilMode,
+      draftMode,
       selectedValue,
     }
   },
@@ -90,12 +92,12 @@ export default defineComponent({
         if (!this.isSelecting) return;
 
         if (ev.code == 'Space') {
-          this.togglePencilMode()
+          this.toggleDraftMode()
           return;
         }
 
         if (ev.code == 'AltLeft') {
-          this.quickPencilCell()
+          this.quickDraftCell()
           return;
         }
 
@@ -131,6 +133,9 @@ export default defineComponent({
 
     newGame(): void {
       this.clearAll();
+
+      (this.$refs.timer as InstanceType<typeof CountupTimer>).resetTimer();
+      
       const puzzle: number[] = this.generateSudoku(this.level);
 
       this.grid = Array(this.gridSize)
@@ -141,8 +146,8 @@ export default defineComponent({
         );
     },
 
-    togglePencilMode(): void {
-      this.pencilMode = !this.pencilMode;
+    toggleDraftMode(): void {
+      this.draftMode = !this.draftMode;
     },
 
     selectCell(i: number, j: number): void {
@@ -255,19 +260,19 @@ export default defineComponent({
       this.grid[i] = modifiedRow;
     },
 
-    togglePencilGridValue(i: number, j: number, n: number): void {
-      const row = this.pencilGrid[i].slice(0);
+    toggleDraftGridValue(i: number, j: number, n: number): void {
+      const row = this.draftGrid[i].slice(0);
       const arr = row[j].slice(0);
       arr[n - 1] = !arr[n - 1];
       row[j] = arr;
-      this.pencilGrid[i] = row;
+      this.draftGrid[i] = row;
     },
 
-    clearPencilGridCell(i: number, j: number): void {
-      const row = this.pencilGrid[i].slice(0);
+    clearDraftGridCell(i: number, j: number): void {
+      const row = this.draftGrid[i].slice(0);
 
       row[j] = new Array(this.gridSize).fill(false);
-      this.pencilGrid[i] = row;
+      this.draftGrid[i] = row;
     },
 
     setGridWrongValue(i: number, j: number, wrong = true) {
@@ -277,35 +282,35 @@ export default defineComponent({
       })
     },
 
-    quickPencilCell() {
-      this.pencilMode = true;
+    quickDraftCell() {
+      this.draftMode = true;
       for (let i = 0; i < this.gridSize; i++) {
         this.assignCell(i + 1);
       }
     },
 
-    // quickPencilAll() {
-    //   const savedMode = this.pencilMode;
+    // quickDraftAll() {
+    //   const savedMode = this.draftMode;
     //   for (let i = 0; i < this.gridSize; i++) {
     //     for (let j = 0; j < this.gridSize; j++) {
     //       this.selected = [i, j]
-    //       this.clearPencilGridCell(i, j);
-    //       this.quickPencilCell()
+    //       this.clearDraftGridCell(i, j);
+    //       this.quickDraftCell()
     //     }
     //   }
     //   this.clearSelection();
 
-    //   this.pencilMode = savedMode;
+    //   this.draftMode = savedMode;
     // },
 
-    updatePencilGridValues(i: number, j: number, n: number): void {
+    updateDraftGridValues(i: number, j: number, n: number): void {
       for (let k = 0; k < this.gridSize; k++) {
-        if (this.pencilGrid[i][k][n - 1]) {
-          this.togglePencilGridValue(i, k, n);
+        if (this.draftGrid[i][k][n - 1]) {
+          this.toggleDraftGridValue(i, k, n);
         }
 
-        if (this.pencilGrid[k][j][n - 1]) {
-          this.togglePencilGridValue(k, j, n);
+        if (this.draftGrid[k][j][n - 1]) {
+          this.toggleDraftGridValue(k, j, n);
         }
       }
       // Judge current square
@@ -317,8 +322,8 @@ export default defineComponent({
 
       for (let k = startI; k < endI; k++) {
         for (let m = startJ; m < endJ; m++) {
-          if (this.pencilGrid[k][m][n - 1]) {
-            this.togglePencilGridValue(k, m, n);
+          if (this.draftGrid[k][m][n - 1]) {
+            this.toggleDraftGridValue(k, m, n);
           }
         }
       }
@@ -337,9 +342,9 @@ export default defineComponent({
       if (cell.cellValue === n) return; // avoid unnecessary operations
       if (n && n > this.gridSize) return; // For sudokus over 9*9
 
-      if (n && this.pencilMode) {
+      if (n && this.draftMode) {
         if (!this.checkCellValue(i, j, n)) {
-          this.togglePencilGridValue(i, j, n)
+          this.toggleDraftGridValue(i, j, n)
         }
       } else {
         this.setGridValue(i, j, {
@@ -347,10 +352,10 @@ export default defineComponent({
           cellValue: n,
         })
 
-        this.clearPencilGridCell(i, j);
+        this.clearDraftGridCell(i, j);
 
         if (n != null) {
-          this.updatePencilGridValues(i, j, n);
+          this.updateDraftGridValues(i, j, n);
         }
 
         this.judgeBoard();
@@ -360,19 +365,19 @@ export default defineComponent({
 
     clearAll(): void {
       let board = this.grid;
-      let pencilGrid = this.pencilGrid
+      let draftGrid = this.draftGrid
 
       for (let i = 0; i < this.gridSize; i++) {
         for (let j = 0; j < this.gridSize; j++) {
           if (!board[i][j].isPrefilled) {
             board[i][j] = new CellState();
-            pencilGrid[i][j] = new Array(this.gridSize).fill(false)
+            draftGrid[i][j] = new Array(this.gridSize).fill(false)
           }
         }
       }
 
       this.grid = board;
-      this.pencilGrid = pencilGrid;
+      this.draftGrid = draftGrid;
     }
   }
 })
@@ -386,10 +391,10 @@ export default defineComponent({
       <div class="mx-auto mt-4">
         <div class="flex flex-row px-4">
           <button
-            class="mx-2"
-            :class="{ 'button-dark': pencilMode, 'button': !pencilMode }"
-            @click="togglePencilMode"
-          >Draft Mode: {{ pencilMode ? 'On' : 'Off' }}</button>
+            class="mx-2 self-center"
+            :class="{ 'button-dark': draftMode, 'button': !draftMode }"
+            @click="toggleDraftMode"
+          >Draft Mode: {{ draftMode ? 'On' : 'Off' }}</button>
           <div class="mx-2 self-center border border-solid border-gray-400 p-2 rounded">
             <label for="level" class="font-bold">Level: </label>
             <select v-model="level">
@@ -401,9 +406,12 @@ export default defineComponent({
           </div>
           <button class="bg-green-500 hover:bg-green-700 text-white font-bold px-2 rounded mx-2" @click="newGame">New Game</button>
           <button class="bg-gray-400 hover:bg-gray-600 text-white font-bold px-2 rounded mx-2" @click="clearAll">Clear Board</button>
-
-          <!-- <button class="button-dark mx-2" @click="quickPencilAll">Quick Pencil All</button> -->
-          <!-- <span>(Fill with pencil all possible values)</span> -->
+          <!-- add cpuntuptimer -->
+          <countup-timer
+            ref="timer"
+          />
+          <!-- <button class="button-dark mx-2" @click="quickDraftAll">Quick Draft All</button> -->
+          <!-- <span>(Fill with draft all possible values)</span> -->
           
         </div>
         <hr class="mt-2">
@@ -421,11 +429,11 @@ export default defineComponent({
         <div class="container mx-auto mt-4 h-full">
           <div class="flex flex-wrap flex-col h-full">
             <div class="my-4">
-              <sudoku-grid :grid="grid" :pencil-grid="pencilGrid" :sudoku-level="sudokuLevel">
-                <template v-slot.default="{ i, j, cell, pencil }">
+              <sudoku-grid :grid="grid" :draft-grid="draftGrid" :sudoku-level="sudokuLevel">
+                <template v-slot.default="{ i, j, cell, draft }">
                   <sudoku-cell
                     :cell="grid[i][j]"
-                    :pencil="pencil"
+                    :draft="draft"
                     :highlighted-value="selectedValue"
                     :is-selected="(i == selected[0] && j == selected[1])"
                     @onCellSelect="selectCell(i, j)"
