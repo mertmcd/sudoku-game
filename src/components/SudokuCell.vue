@@ -46,7 +46,7 @@ export default defineComponent({
   >
     <template v-if="showPencilValues">
       <span
-        class="text-xs italic"
+        class="text-xs italic font-semibold"
         :class="{ invisible: !v, highlighted: (n + 1 == highlightedValue) }"
         v-for="(v, n) in pencil"
       >{{ (n + 1) }}</span>
@@ -67,7 +67,6 @@ export default defineComponent({
   @apply border-2 border-blue-900;
   @apply font-medium;
   @apply cursor-pointer;
-
 }
 
 .cell.selected {
