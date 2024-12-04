@@ -8,7 +8,7 @@ export default defineComponent({
       type: Object as PropType<CellState[][]>,
       required: true,
     },
-    pencilGrid: {
+    draftGrid: {
       type: Object as PropType<(boolean[][][])>,
       required: true,
     },
@@ -32,7 +32,7 @@ export default defineComponent({
                 :i="block_i * sudokuLevel + i"
                 :j="block_j * sudokuLevel + j"
                 :cell="grid[block_i * sudokuLevel + i][block_j * sudokuLevel + j]"
-                :pencil="pencilGrid[block_i * sudokuLevel + i][block_j * sudokuLevel + j]"
+                :draft="draftGrid[block_i * sudokuLevel + i][block_j * sudokuLevel + j]"
               ></slot>
             </template>
           </template>

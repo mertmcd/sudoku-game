@@ -8,7 +8,7 @@ export default defineComponent({
       type: Object as PropType<CellState>,
       required: true,
     },
-    pencil: {
+    draft: {
       type: Array as PropType<boolean[]>,
       required: true,
     },
@@ -21,8 +21,8 @@ export default defineComponent({
 
   },
   computed: {
-    showPencilValues() {
-      return this.cell.cellValue === null && this.pencil.some(v => v);
+    showDraftValues() {
+      return this.cell.cellValue === null && this.draft.some(v => v);
     }
   },
 
@@ -39,16 +39,16 @@ export default defineComponent({
       selected: isSelected,
       wrong: cell.isWrong,
       prefilled: cell.isPrefilled,
-      'grid grid-cols-3 grid-rows-3': showPencilValues,
-      'grid grid-cols-4 grid-rows-4': pencil.length === 15 && showPencilValues,
+      'grid grid-cols-3 grid-rows-3': showDraftValues,
+      'grid grid-cols-4 grid-rows-4': draft.length === 15 && showDraftValues,
     }"
     class
   >
-    <template v-if="showPencilValues">
+    <template v-if="showDraftValues">
       <span
         class="text-xs italic font-semibold"
         :class="{ invisible: !v, highlighted: (n + 1 == highlightedValue) }"
-        v-for="(v, n) in pencil"
+        v-for="(v, n) in draft"
       >{{ (n + 1) }}</span>
     </template>
     <template v-else>{{ cell.cellValue }}</template>
