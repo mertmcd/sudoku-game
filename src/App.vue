@@ -286,19 +286,19 @@ export default defineComponent({
       }
     },
 
-    quickPencilAll() {
-      const savedMode = this.pencilMode;
-      for (let i = 0; i < this.gridSize; i++) {
-        for (let j = 0; j < this.gridSize; j++) {
-          this.selected = [i, j]
-          this.clearPencilGridCell(i, j);
-          this.quickPencilCell()
-        }
-      }
-      this.clearSelection();
+    // quickPencilAll() {
+    //   const savedMode = this.pencilMode;
+    //   for (let i = 0; i < this.gridSize; i++) {
+    //     for (let j = 0; j < this.gridSize; j++) {
+    //       this.selected = [i, j]
+    //       this.clearPencilGridCell(i, j);
+    //       this.quickPencilCell()
+    //     }
+    //   }
+    //   this.clearSelection();
 
-      this.pencilMode = savedMode;
-    },
+    //   this.pencilMode = savedMode;
+    // },
 
     updatePencilGridValues(i: number, j: number, n: number): void {
       for (let k = 0; k < this.gridSize; k++) {
@@ -382,38 +382,47 @@ export default defineComponent({
 
 <template>
   <div class="container m-auto">
-    <h1 class="text-2xl font-bold underline mb-3">Sudoku {{ gridSize }} x {{ gridSize }}</h1>
+    <h1 class="mx-auto py-2 flex w-fit bg-gradient-to-r from-blue-500 via-teal-500 to-pink-500 bg-clip-text text-3xl box-content font-extrabold text-transparent text-center select-none">Sudoku Game by mertmcd</h1>
     <div class="flex flex-col-reverse md:flex-col h-full">
       <!-- Sidebar -->
-      <div class="md:basis-1/4 md:border">
-        <div class="flex flex-row px-10">
+      <div class="mx-auto mt-4">
+        <div class="flex flex-row px-4">
           <button
             class="mx-2"
             :class="{ 'button-dark': pencilMode, 'button': !pencilMode }"
             @click="togglePencilMode"
           >Draft Mode: {{ pencilMode ? 'On' : 'Off' }}</button>
-          <div class="mx-2">
-            <label for="level">Level :</label>
+          <div class="mx-2 self-center border border-solid border-gray-400 p-2 rounded">
+            <label for="level" class="font-bold">Level: </label>
             <select v-model="level">
-              <option value="medium">Medium</option>
-              <option value="extreme">Extreme</option>
+              <option value="beginner">Beginner</option>
+              <option value="intermediate">Intermediate</option>
+              <option value="medium">Medium</option> <!-- Hard -->
+              <option value="extreme">Extreme</option> <!-- Expert -->
             </select>
           </div>
-          <button class="bg- mx-2" @click="newGame">New Game</button>
+          <button class="bg-green-500 hover:bg-green-700 text-white font-bold px-2 rounded mx-2" @click="newGame">New Game</button>
+          <button class="bg-gray-400 hover:bg-gray-600 text-white font-bold px-2 rounded mx-2" @click="clearAll">Clear Board</button>
 
-          <button class="button-dark mx-2" @click="clearAll">Clear all</button>
-          <button class="button-dark mx-2" @click="quickPencilAll">Quick Pencil All
-          </button>
-          <span>(Fill with pencil all possible values)</span>
+          <!-- <button class="button-dark mx-2" @click="quickPencilAll">Quick Pencil All</button> -->
+          <!-- <span>(Fill with pencil all possible values)</span> -->
           
         </div>
+        <hr class="mt-2">
+        <div class="instructions">
+            <h2 class="text-xl font-bold mt-4">Instructions</h2>
+            <p><b>Draft Mode:</b> When enabled, you can add multiple values to each cell as notes.</p>
+            <p>(<span class="text-red-500 font-bold">**</span>You cannot input numbers while draft mode is on.)</p>
+            <p>Press <b>Space</b> to toggle Draft Mode</p>
+            <p>Use the <b>arrow keys</b> to navigate the cells</p>
+            <p>Press <b>Delete</b> to clear the cell</p>
+          </div>
       </div>
       <!-- Sudoku Grid -->
-      <div class="md:basis-3/4 h-full">
-        <div class="container mx-auto mt-10 h-full">
-          <div class="flex flex-wrap flex-row h-full">
-            <div class="md:basis-1/6"></div>
-            <div class="md:basis-3/6">
+      <div class="h-full">
+        <div class="container mx-auto mt-4 h-full">
+          <div class="flex flex-wrap flex-col h-full">
+            <div class="my-4">
               <sudoku-grid :grid="grid" :pencil-grid="pencilGrid" :sudoku-level="sudokuLevel">
                 <template v-slot.default="{ i, j, cell, pencil }">
                   <sudoku-cell
@@ -426,11 +435,15 @@ export default defineComponent({
                 </template>
               </sudoku-grid>
             </div>
-            <div class="md:basis-1/12"></div>
-            <div class="basis-full md:basis-1/12 flex flex-row md:flex-col my-5 md:my-0">
+            <div class="my-4">
               <!-- Row -->
+               <p class="my-2">You can also use the on-screen keyboard instead of the physical keyboard.</p>
               <button @click="assignCell(i)" v-for="i in 9" class="number-cell flex-grow">{{ i }}</button>
-              <button @click="assignCell(null)" class="number-cell flex-grow">X</button>
+              <button @click="assignCell(null)" class="number-cell undo flex-grow">Undo</button>
+              <button @click="togglePencilMode()" class="number-cell draft flex-grow">Toggle Draft</button>
+
+              <p class="mt-2">(<span class="text-red-500 font-bold">**</span>
+                Pressing the undo button only clears the cell. If an error was made, your score will still decrease.)</p>
               <!-- <div class="md:invisible w-full grid grid-rows-1 grid-cols-10">
               </div>-->
               <!-- Col -->
@@ -455,9 +468,16 @@ export default defineComponent({
 }
 
 .number-cell {
-  cursor: pointer;
-  @apply text-3xl;
-  @apply border border-slate-600;
+  @apply text-3xl hover:bg-gray-200 cursor-pointer border-2 mx-1 border-gray-400 w-12;
+  vertical-align: middle;
+}
+
+.undo {
+  @apply bg-red-500 hover:bg-red-700 text-white w-24 h-10 rounded border-none font-bold text-2xl px-2;
+}
+
+.draft {
+  @apply bg-blue-500 hover:bg-blue-700 text-white w-24 h-10 rounded border-none font-bold text-sm px-2;
 }
 
 .button {
@@ -468,20 +488,5 @@ export default defineComponent({
 .button-dark {
   @apply button;
   @apply bg-slate-700 text-white;
-}
-
-kbd {
-  background-color: #eee;
-  border-radius: 3px;
-  border: 1px solid #b4b4b4;
-  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.2),
-    0 2px 0 0 rgba(255, 255, 255, 0.7) inset;
-  color: #333;
-  display: inline-block;
-  font-size: 0.85em;
-  font-weight: 700;
-  line-height: 1;
-  padding: 2px 4px;
-  white-space: nowrap;
 }
 </style>
