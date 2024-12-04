@@ -16,7 +16,7 @@ export default defineComponent({
   setup() {
     const sudokuLevel = ref(3); // n
     const gridSize = computed(() => sudokuLevel.value ** 2); // n*n
-    const level: Ref<("medium" | "extreme")> = ref("medium");
+    const level: Ref<("beginner" | "intermediate" | "hard" | "expert")> = ref("beginner");
 
     const grid: Ref<CellState[][]> = ref(
       Array(gridSize.value)
@@ -123,9 +123,10 @@ export default defineComponent({
       });
     },
 
-    generateSudoku(level: ("extreme" | "medium")): number[] {
-      const puzzle = PuzzleSet[level][Math.floor(Math.random() * PuzzleSet[level].length)] as number[];
-      return puzzle;
+    generateSudoku(level: "beginner" | "intermediate" | "hard" | "expert"): number[] {
+      const puzzleSet = PuzzleSet[level];
+      const randomIndex = Math.floor(Math.random() * puzzleSet.length);
+      return puzzleSet[randomIndex];
     },
 
     newGame(): void {
@@ -185,15 +186,12 @@ export default defineComponent({
 
           if (value === this.grid[k][m].cellValue) {
             hasError = true;
-
             this.setGridWrongValue(k, m);
           }
         }
       }
 
-      this.setGridWrongValue(i, j, hasError);
-
-      return !hasError;// true if okay
+      return hasError;
     },
 
     checkCellValue(i: number, j: number, value: number | null): boolean {
@@ -397,8 +395,8 @@ export default defineComponent({
             <select v-model="level">
               <option value="beginner">Beginner</option>
               <option value="intermediate">Intermediate</option>
-              <option value="medium">Medium</option> <!-- Hard -->
-              <option value="extreme">Extreme</option> <!-- Expert -->
+              <option value="hard">Hard</option>
+              <option value="expert">Expert</option> 
             </select>
           </div>
           <button class="bg-green-500 hover:bg-green-700 text-white font-bold px-2 rounded mx-2" @click="newGame">New Game</button>
@@ -440,8 +438,6 @@ export default defineComponent({
                <p class="my-2">You can also use the on-screen keyboard instead of the physical keyboard.</p>
               <button @click="assignCell(i)" v-for="i in 9" class="number-cell flex-grow">{{ i }}</button>
               <button @click="assignCell(null)" class="number-cell undo flex-grow">Undo</button>
-              <button @click="togglePencilMode()" class="number-cell draft flex-grow">Toggle Draft</button>
-
               <p class="mt-2">(<span class="text-red-500 font-bold">**</span>
                 Pressing the undo button only clears the cell. If an error was made, your score will still decrease.)</p>
               <!-- <div class="md:invisible w-full grid grid-rows-1 grid-cols-10">
