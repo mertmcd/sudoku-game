@@ -109,7 +109,8 @@ export default defineComponent({
         }
 
         const i = this.selected[0];
-        const j = this.selected[1]
+        const j = this.selected[1];
+
         if (ev.code == 'ArrowRight') {
           this.selected = [i, (j >= this.gridSize - 1) ? j : j + 1];
           return;
@@ -340,6 +341,13 @@ export default defineComponent({
       const i = this.selected[0]
       const j = this.selected[1]
 
+      // clear all .cell's .wrong class
+      for (let i = 0; i < this.gridSize; i++) {
+            for (let j = 0; j < this.gridSize; j++) {
+              this.setGridWrongValue(i, j, false);
+            }
+      }
+
       if (i < 0 || i >= this.gridSize || j < 0 && j >= this.gridSize) return;
 
       const cell = this.grid[i][j];
@@ -353,7 +361,6 @@ export default defineComponent({
           this.toggleDraftGridValue(i, j, n)
         }
       } else {
-        debugger
         this.setGridValue(i, j, {
           ...cell,
           cellValue: n,
@@ -456,7 +463,7 @@ export default defineComponent({
             <div class="flex flex-wrap flex-col h-full">
               <div class="my-4">
                 <sudoku-grid :grid="grid" :draft-grid="draftGrid">
-                  <template v-slot.default="{ i, j, cell, draft }">
+                  <template v-slot.default="{ i, j, draft }">
                     <sudoku-cell :cell="grid[i][j]" :draft="draft" :highlighted-value="selectedValue"
                       :is-selected="(i == selected[0] && j == selected[1])" @onCellSelect="selectCell(i, j)" />
                   </template>
