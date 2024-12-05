@@ -1,16 +1,4 @@
-<template>
-    <div class="countup-timer text-3xl text-center flex border-l-2 pl-4 items-center">
-      <p>{{ time }}</p>
-      <button
-        class="bg-blue-500 hover:bg-blue-700 w-20 p-2 text-base text-white text-center border-none rounded ml-4 cursor-pointer"
-        @click="pauseTimer"
-      >
-        {{ isPaused ? 'Resume' : 'Pause' }}
-      </button>
-    </div>
-  </template>
-  
-  <script lang="ts">
+<script lang="ts">
   import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
   
   export default {
@@ -81,3 +69,14 @@
   };
   </script>
   
+  <template>
+    <div class="countup-timer text-3xl text-center flex border-l-2 pl-4 items-center">
+      <p>{{ time }}</p>
+      <button
+        class="bg-blue-500 hover:bg-blue-700 w-20 p-2 text-base font-semibold text-white text-center border-none rounded ml-4 cursor-pointer"
+        @click="pauseTimer"
+      >
+        {{ isPaused ? 'Resume' : 'Pause' }}
+      </button>
+    </div>
+  </template>
