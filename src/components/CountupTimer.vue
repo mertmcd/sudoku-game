@@ -3,7 +3,7 @@ import { ref, computed, onMounted, onBeforeUnmount, Ref } from 'vue';
 
 export default {
   name: 'CountupTimer',
-  setup() {
+  setup( props, { expose }) {
     const minutes: Ref<number> = ref(0);
     const seconds: Ref<number> = ref(0);
     const isPaused: Ref<boolean> = ref(false);
@@ -63,6 +63,10 @@ export default {
       if (timer.value !== null) {
         clearInterval(timer.value);
       }
+    });
+
+    expose({
+      resetTimer,
     });
 
     return {

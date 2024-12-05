@@ -7,9 +7,10 @@ import SudokuGrid from './components/SudokuGrid.vue';
 import CountupTimer from './components/CountupTimer.vue';
 import ShowHint from './components/ShowHint.vue';
 import PuzzleSet from './models/SudokuPuzzleSet.json';
+import PuzzleAnswers from './models/PuzzleAnswers.json';
 import './assets/main.css';
 
-type SudokuLevel = "beginner" | "intermediate" | "hard" | "expert";
+type SudokuLevel = 'beginner' | 'intermediate' | 'hard' | 'expert';
 type GridSize = 9;
 
 export default defineComponent({
@@ -24,12 +25,17 @@ export default defineComponent({
   setup() {
     const sudokuLevel = 3;
     const gridSize: GridSize = 9;
-    const level: Ref<SudokuLevel> = ref("beginner");
-
+    const level: Ref<SudokuLevel> = ref('beginner');
+    const hint: Ref<InstanceType<typeof ShowHint> | null> = ref(null);
+    const timer: Ref<InstanceType<typeof CountupTimer> | null> = ref(null);
     const grid: Ref<CellState[][]> = ref(
-      Array(gridSize).fill(null).map(() =>
-        Array(gridSize).fill(null).map(() => new CellState())
-      )
+      Array(gridSize)
+        .fill(null)
+        .map(() =>
+          Array(gridSize)
+            .fill(null)
+            .map(() => new CellState(null, 0))
+        )
     );
 
     const draftGrid: Ref<boolean[][][]> = ref(
@@ -40,16 +46,20 @@ export default defineComponent({
 
     const draftMode = ref(false);
 
-    const isSelecting = computed(() => (
-      selectedIndexes.value[0] >= 0
-      && selectedIndexes.value[0] < gridSize
-      && selectedIndexes.value[1] >= 0
-      && selectedIndexes.value[1] < gridSize
-    ));
+    const isSelecting = computed(
+      () =>
+        selectedIndexes.value[0] >= 0 &&
+        selectedIndexes.value[0] < gridSize &&
+        selectedIndexes.value[1] >= 0 &&
+        selectedIndexes.value[1] < gridSize
+    );
 
-    const selectedValue = computed(() => (
-      isSelecting.value ? grid.value[selectedIndexes.value[0]][selectedIndexes.value[1]].cellValue : null
-    ));
+    const selectedValue = computed(() =>
+      isSelecting.value
+        ? grid.value[selectedIndexes.value[0]][selectedIndexes.value[1]]
+            .cellValue
+        : null
+    );
 
     return {
       sudokuLevel,
@@ -61,6 +71,8 @@ export default defineComponent({
       isSelecting,
       draftMode,
       selectedValue,
+      hint,
+      timer
     };
   },
 
@@ -72,39 +84,46 @@ export default defineComponent({
   methods: {
     registerKeyboardEvents() {
       const ALLOWED_KEYS: { [key: string]: number | null } = {
-        'Delete': null,
-        'Digit1': 1,
-        'Digit2': 2,
-        'Digit3': 3,
-        'Digit4': 4,
-        'Digit5': 5,
-        'Digit6': 6,
-        'Digit7': 7,
-        'Digit8': 8,
-        'Digit9': 9,
-        'KeyQ': 10,
-        'KeyB': 11,
-        'KeyC': 12,
-        'KeyD': 13,
-        'KeyE': 14,
-        'KeyF': 15,
+        Delete: null,
+        Digit1: 1,
+        Digit2: 2,
+        Digit3: 3,
+        Digit4: 4,
+        Digit5: 5,
+        Digit6: 6,
+        Digit7: 7,
+        Digit8: 8,
+        Digit9: 9,
+        KeyQ: 10,
+        KeyB: 11,
+        KeyC: 12,
+        KeyD: 13,
+        KeyE: 14,
+        KeyF: 15,
       };
+
+      // addEventListener('visibilitychange', (event) => {
+      //   const timer = this.$refs.timer as InstanceType<typeof CountupTimer>;
+   
+      //   // if (!timer) return;
+      //   (this.$refs.timer as InstanceType<typeof CountupTimer>)?.pauseTimer();
+      // });
 
       window.addEventListener('keydown', (ev) => {
         if (ev.code in ALLOWED_KEYS) {
-          this.assignCell(ALLOWED_KEYS[ev.code])
+          this.assignCell(ALLOWED_KEYS[ev.code]);
           return;
         }
 
         if (!this.isSelecting) return;
 
         if (ev.code == 'Space') {
-          this.toggleDraftMode()
+          this.toggleDraftMode();
           return;
         }
 
         if (ev.code == 'AltLeft') {
-          this.quickDraftCell()
+          this.quickDraftCell();
           return;
         }
 
@@ -112,7 +131,7 @@ export default defineComponent({
         const j = this.selected[1];
 
         if (ev.code == 'ArrowRight') {
-          this.selected = [i, (j >= this.gridSize - 1) ? j : j + 1];
+          this.selected = [i, j >= this.gridSize - 1 ? j : j + 1];
           return;
         }
 
@@ -142,15 +161,26 @@ export default defineComponent({
     newGame(): void {
       this.clearAll();
 
-      (this.$refs.timer as InstanceType<typeof CountupTimer>).resetTimer();
+      this.timer?.resetTimer();
+      this.hint?.resetRemainingHints();
+
+      
 
       const puzzle: number[] = this.generateSudoku(this.level);
+      const puzzleSolved: number[] = PuzzleAnswers[this.level][0];
 
       this.grid = Array(this.gridSize)
-        .fill(null).map((_, i) =>
-          Array(this.gridSize).fill(null).map((_, j) =>
-            new CellState(puzzle[i * this.gridSize + j] || null)
-          )
+        .fill(null)
+        .map((_, i) =>
+          Array(this.gridSize)
+            .fill(null)
+            .map(
+              (_, j) =>
+                new CellState(
+                  puzzle[i * this.gridSize + j] || null,
+                  puzzleSolved[i * this.gridSize + j]
+                )
+            )
         );
     },
 
@@ -162,7 +192,9 @@ export default defineComponent({
       this.selected = [i, j];
     },
 
-    clearSelection(): void { this.selected = [-1, -1]; },
+    clearSelection(): void {
+      this.selected = [-1, -1];
+    },
 
     judgeCell(i: number, j: number): boolean {
       let hasError = false;
@@ -187,8 +219,8 @@ export default defineComponent({
         }
       }
       // judge current square
-      const startI = i - i % this.sudokuLevel;
-      const startJ = j - j % this.sudokuLevel;
+      const startI = i - (i % this.sudokuLevel);
+      const startJ = j - (j % this.sudokuLevel);
 
       const endI = startI + this.sudokuLevel;
       const endJ = startJ + this.sudokuLevel;
@@ -223,8 +255,8 @@ export default defineComponent({
         }
       }
       // judge current square
-      const startI = i - i % this.sudokuLevel;
-      const startJ = j - j % this.sudokuLevel;
+      const startI = i - (i % this.sudokuLevel);
+      const startJ = j - (j % this.sudokuLevel);
 
       const endI = startI + this.sudokuLevel;
       const endJ = startJ + this.sudokuLevel;
@@ -255,9 +287,9 @@ export default defineComponent({
       }
 
       if (hasWon) {
-        alert("Yay you won!");
+        alert('Yay you won!');
       }
-  },
+    },
 
     setGridValue(i: number, j: number, cellState: CellState): void {
       let modifiedRow = this.grid[i].slice(0);
@@ -286,7 +318,7 @@ export default defineComponent({
       this.setGridValue(i, j, {
         ...this.grid[i][j],
         isWrong: wrong,
-      })
+      });
     },
 
     quickDraftCell() {
@@ -321,8 +353,8 @@ export default defineComponent({
         }
       }
       // Judge current square
-      const startI = i - i % this.sudokuLevel;
-      const startJ = j - j % this.sudokuLevel;
+      const startI = i - (i % this.sudokuLevel);
+      const startJ = j - (j % this.sudokuLevel);
 
       const endI = startI + this.sudokuLevel;
       const endJ = startJ + this.sudokuLevel;
@@ -334,21 +366,20 @@ export default defineComponent({
           }
         }
       }
-
     },
 
     assignCell(n: number | null): void {
-      const i = this.selected[0]
-      const j = this.selected[1]
+      const i = this.selected[0];
+      const j = this.selected[1];
 
       // clear all .cell's .wrong class
       for (let i = 0; i < this.gridSize; i++) {
-            for (let j = 0; j < this.gridSize; j++) {
-              this.setGridWrongValue(i, j, false);
-            }
+        for (let j = 0; j < this.gridSize; j++) {
+          this.setGridWrongValue(i, j, false);
+        }
       }
 
-      if (i < 0 || i >= this.gridSize || j < 0 && j >= this.gridSize) return;
+      if (i < 0 || i >= this.gridSize || (j < 0 && j >= this.gridSize)) return;
 
       const cell = this.grid[i][j];
 
@@ -358,13 +389,13 @@ export default defineComponent({
 
       if (n && this.draftMode) {
         if (!this.checkCellValue(i, j, n)) {
-          this.toggleDraftGridValue(i, j, n)
+          this.toggleDraftGridValue(i, j, n);
         }
       } else {
         this.setGridValue(i, j, {
           ...cell,
           cellValue: n,
-        })
+        });
 
         this.clearDraftGridCell(i, j);
 
@@ -372,42 +403,51 @@ export default defineComponent({
           this.updateDraftGridValues(i, j, n);
         }
 
-          this.judgeBoard();
+        this.judgeBoard();
       }
     },
 
     clearAll(): void {
       let board = this.grid;
-      let draftGrid = this.draftGrid
+      let draftGrid = this.draftGrid;
 
       for (let i = 0; i < this.gridSize; i++) {
         for (let j = 0; j < this.gridSize; j++) {
           if (!board[i][j].isPrefilled) {
-            board[i][j] = new CellState();
-            draftGrid[i][j] = new Array(this.gridSize).fill(false)
+            board[i][j] = new CellState(null, 0);
+            draftGrid[i][j] = new Array(this.gridSize).fill(false);
           }
         }
       }
 
       this.grid = board;
       this.draftGrid = draftGrid;
-    }
-  }
-})
+    },
+  },
+});
 </script>
 
 <template>
   <div class="container m-auto">
     <h1
-      class="mx-auto py-2 flex w-fit bg-gradient-to-r from-blue-500 via-teal-500 to-pink-500 bg-clip-text text-3xl box-content font-extrabold text-transparent text-center select-none">
-      Sudoku Game by mertmcd</h1>
+      class="mx-auto py-2 flex w-fit bg-gradient-to-r from-blue-500 via-teal-500 to-pink-500 bg-clip-text text-3xl box-content font-extrabold text-transparent text-center select-none"
+    >
+      Sudoku Game by mertmcd
+    </h1>
     <div class="flex flex-col-reverse md:flex-col h-full">
       <!-- Sidebar -->
       <div class="mx-auto mt-4">
         <div class="flex flex-row px-4">
-          <button class="mx-2 self-center" :class="{ 'button-dark': draftMode, 'button': !draftMode }"
-            @click="toggleDraftMode">Draft Mode: {{ draftMode ? 'On' : 'Off' }}</button>
-          <div class="mx-2 self-center border border-solid border-gray-400 p-2 rounded">
+          <button
+            class="mx-2 self-center"
+            :class="{ 'button-dark': draftMode, button: !draftMode }"
+            @click="toggleDraftMode"
+          >
+            Draft Mode: {{ draftMode ? 'On' : 'Off' }}
+          </button>
+          <div
+            class="mx-2 self-center border border-solid border-gray-400 p-2 rounded"
+          >
             <label for="level" class="font-bold">Level: </label>
             <select v-model="level">
               <option value="beginner">Beginner</option>
@@ -416,31 +456,58 @@ export default defineComponent({
               <option value="expert">Expert</option>
             </select>
           </div>
-          <button class="bg-green-500 hover:bg-green-700 text-white font-bold px-2 rounded mx-2" @click="newGame">New
-            Game</button>
-          <button class="bg-gray-400 hover:bg-gray-600 text-white font-bold px-2 rounded mx-2" @click="clearAll">Clear
-            Board</button>
+          <button
+            class="bg-green-500 hover:bg-green-700 text-white font-bold px-2 rounded mx-2"
+            @click="newGame"
+          >
+            New Game
+          </button>
+          <button
+            class="bg-gray-400 hover:bg-gray-600 text-white font-bold px-2 rounded mx-2"
+            @click="clearAll"
+          >
+            Clear Board
+          </button>
 
           <countup-timer ref="timer" />
-          <show-hint class="hint-button" />
+
+          <show-hint 
+            class="hint-button"
+            :selected="selected"
+            :grid="grid"
+            @judge-board="judgeBoard"
+            ref='hint'
+            />
 
           <!-- <button class="button-dark mx-2" @click="quickDraftAll">Quick Draft All</button> -->
           <!-- <span>(Fill with draft all possible values)</span> -->
-
         </div>
-        <hr class="mt-2">
+        <hr class="mt-2" />
         <div class="instructions">
           <h2 class="text-xl font-bold mt-4">Instructions</h2>
           <div class="warning-items flex flex-col items-start mt-2">
-            <p><span class="text-red-500 font-bold">**</span>You cannot input numbers while draft mode is on.</p>
-            <p><span class="text-red-500 font-bold">**</span>Each hint will progressively decrease your score, starting
-              at -3 and subtracting an additional point with each use.</p>
-            <p><span class="text-red-500 font-bold">**</span>Each incorrect cell input will decrease your score by 1
-              point.</p>
-            <p><span class="text-red-500 font-bold">**</span>Each correct cell input will increase your score by 5
-              point.</p>
-            <p><span class="text-red-500 font-bold">**</span>The total elapsed time, in seconds, is subtracted from 500
-              and added to your score, so using the pause button wisely can be beneficial.</p>
+            <p>
+              <span class="text-red-500 font-bold">**</span>You cannot input
+              numbers while draft mode is on.
+            </p>
+            <p>
+              <span class="text-red-500 font-bold">**</span>Each hint will
+              progressively decrease your score, starting at -3 and subtracting
+              an additional point with each use.
+            </p>
+            <p>
+              <span class="text-red-500 font-bold">**</span>Each incorrect cell
+              input will decrease your score by 1 point.
+            </p>
+            <p>
+              <span class="text-red-500 font-bold">**</span>Each correct cell
+              input will increase your score by 5 point.
+            </p>
+            <p>
+              <span class="text-red-500 font-bold">**</span>The total elapsed
+              time, in seconds, is subtracted from 500 and added to your score,
+              so using the pause button wisely can be beneficial.
+            </p>
           </div>
         </div>
       </div>
@@ -448,13 +515,33 @@ export default defineComponent({
       <div class="flex flex-row justify-center">
         <div class="instructions-items mt-12">
           <div class="info-items items-start">
-            <p><b>Draft Mode:</b> When enabled, you can add multiple values to each cell as notes.</p>
-            <p>Press <b>Space</b> to toggle Draft Mode while a cell is focused.</p>
-            <p>Press <b>Hint</b> to see cell's value while a cell is focused.</p>
-            <p>Press <b class="bg-red-500 p-1 rounded text-white">Undo</b> to clear the cell.</p>
-            <p>Press <b class="bg-gray-400 p-1 rounded text-white">Clear Board</b> to clear all cells.</p>
-            <p>Press <b class="bg-green-500 p-1 rounded text-white">New Game</b> to start a new game.</p>
-            <p>Press <b class="bg-blue-500 p-1 rounded text-white">Pause</b> to pause the timer.</p>
+            <p><b>Draft Mode:</b> When enabled, you can add multiple values to
+              each cell as notes.
+            </p>
+            <p>
+              Press <b>Space</b> to toggle Draft Mode while a cell is focused.
+            </p>
+            <p>
+              Press <b>Hint</b> to see cell's value while a cell is focused.
+            </p>
+            <p>
+              Press <b class="bg-red-500 p-1 rounded text-white">Undo</b> to
+              clear the cell.
+            </p>
+            <p>
+              Press
+              <b class="bg-gray-400 p-1 rounded text-white">Clear Board</b> to
+              clear all cells.
+            </p>
+            <p>
+              Press
+              <b class="bg-green-500 p-1 rounded text-white">New Game</b> to
+              start a new game.
+            </p>
+            <p>
+              Press <b class="bg-blue-500 p-1 rounded text-white">Pause</b> to
+              pause the timer.
+            </p>
             <p>Use the <b>Arrow Keys</b> to navigate the cells.</p>
           </div>
         </div>
@@ -464,18 +551,40 @@ export default defineComponent({
               <div class="my-4">
                 <sudoku-grid :grid="grid" :draft-grid="draftGrid">
                   <template v-slot.default="{ i, j, draft }">
-                    <sudoku-cell :cell="grid[i][j]" :draft="draft" :highlighted-value="selectedValue"
-                      :is-selected="(i == selected[0] && j == selected[1])" @onCellSelect="selectCell(i, j)" />
+                    <sudoku-cell
+                      :cell="grid[i][j]"
+                      :draft="draft"
+                      :highlighted-value="selectedValue"
+                      :is-selected="i == selected[0] && j == selected[1]"
+                      @onCellSelect="selectCell(i, j)"
+                    />
                   </template>
                 </sudoku-grid>
               </div>
               <div class="my-4">
                 <!-- Row -->
-                <p class="my-2">You can also use the on-screen keyboard instead of the physical keyboard.</p>
-                <button @click="assignCell(i)" v-for="i in 9" class="number-cell flex-grow">{{ i }}</button>
-                <button @click="assignCell(null)" class="number-cell undo flex-grow">Undo</button>
-                <p class="mt-2">(<span class="text-red-500 font-bold">**</span>
-                  Pressing the undo button only clears the cell. If an error was made, your score will still decrease.)
+                <p class="my-2">
+                  You can also use the on-screen keyboard instead of the
+                  physical keyboard.
+                </p>
+                <button
+                  @click="assignCell(i)"
+                  v-for="i in 9"
+                  :key="i"
+                  class="number-cell flex-grow"
+                >
+                  {{ i }}
+                </button>
+                <button
+                  @click="assignCell(null)"
+                  class="number-cell undo flex-grow"
+                >
+                  Undo
+                </button>
+                <p class="mt-2">
+                  (<span class="text-red-500 font-bold">**</span>
+                  Pressing the undo button only clears the cell. If an error was
+                  made, your score will still decrease.)
                 </p>
                 <!-- <div class="md:invisible w-full grid grid-rows-1 grid-cols-10">
                  </div>-->
@@ -489,7 +598,7 @@ export default defineComponent({
         <div class="leader-board mt-12">
           <!-- for beginner top 3 name show as list-->
           <h2 class="text-2xl font-bold">Leaderboard</h2>
-          <hr>
+          <hr />
 
           <div class="game-levels grid grid-cols-2 gap-x-16 gap-y-8">
             <div class="beginner-board">
@@ -510,8 +619,7 @@ export default defineComponent({
               </ol>
             </div>
             <!-- for hard top 3 name show as list-->
-            <div class="hard-board
-              ">
+            <div class="hard-board">
               <h3 class="text-lg font-bold">Hard</h3>
               <ol>
                 <li>Player 1</li>
@@ -528,11 +636,8 @@ export default defineComponent({
                 <li>Player 3</li>
               </ol>
             </div>
-
           </div>
-
         </div>
-
       </div>
     </div>
   </div>
@@ -561,7 +666,7 @@ export default defineComponent({
   @apply flex flex-col justify-items-start gap-x-8 gap-y-2;
 }
 
-.info-items>p {
+.info-items > p {
   @apply mb-1;
 }
 
