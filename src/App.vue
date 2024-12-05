@@ -142,7 +142,7 @@ export default defineComponent({
       this.clearAll();
 
       (this.$refs.timer as InstanceType<typeof CountupTimer>).resetTimer();
-      
+
       const puzzle: number[] = this.generateSudoku(this.level);
 
       this.grid = Array(this.gridSize)
@@ -243,21 +243,20 @@ export default defineComponent({
 
     judgeBoard(): void {
       let hasWon = true;
+
       for (let i = 0; i < this.gridSize; i++) {
         for (let j = 0; j < this.gridSize; j++) {
-          if (this.grid[i][j].cellValue === null) {
-            console.log("cell ", i, j, " is empty");
+          const isCellCorrect = this.judgeCell(i, j);
+          if (this.grid[i][j].cellValue === null || isCellCorrect) {
             hasWon = false;
           }
-
-          const isCellCorrect = this.judgeCell(i, j);
-
-          hasWon = hasWon && isCellCorrect;
         }
       }
 
-      if (hasWon) alert("Yay you won !\n... Yes that's all I can say now.")
-    },
+      if (hasWon) {
+        alert("Yay you won!");
+      }
+  },
 
     setGridValue(i: number, j: number, cellState: CellState): void {
       let modifiedRow = this.grid[i].slice(0);
@@ -354,6 +353,7 @@ export default defineComponent({
           this.toggleDraftGridValue(i, j, n)
         }
       } else {
+        debugger
         this.setGridValue(i, j, {
           ...cell,
           cellValue: n,
@@ -365,9 +365,8 @@ export default defineComponent({
           this.updateDraftGridValues(i, j, n);
         }
 
-        this.judgeBoard();
+          this.judgeBoard();
       }
-      // clearSelection();
     },
 
     clearAll(): void {
@@ -414,11 +413,9 @@ export default defineComponent({
             Game</button>
           <button class="bg-gray-400 hover:bg-gray-600 text-white font-bold px-2 rounded mx-2" @click="clearAll">Clear
             Board</button>
-          <!-- add cpuntuptimer -->
+
           <countup-timer ref="timer" />
-          <show-hint
-            class="hint-button"
-          />
+          <show-hint class="hint-button" />
 
           <!-- <button class="button-dark mx-2" @click="quickDraftAll">Quick Draft All</button> -->
           <!-- <span>(Fill with draft all possible values)</span> -->
@@ -427,33 +424,33 @@ export default defineComponent({
         <hr class="mt-2">
         <div class="instructions">
           <h2 class="text-xl font-bold mt-4">Instructions</h2>
-            <div class="warning-items flex flex-col items-start mt-2">
-              <p><span class="text-red-500 font-bold">**</span>You cannot input numbers while draft mode is on.</p>
-              <p><span class="text-red-500 font-bold">**</span>Each hint will progressively decrease your score, starting at -3 and subtracting an additional point with each use.</p>
-              <p><span class="text-red-500 font-bold">**</span>Each incorrect cell input will decrease your score by 1 point.</p>
-              <p><span class="text-red-500 font-bold">**</span>Each correct cell input will increase your score by 5 point.</p>
-              <p><span class="text-red-500 font-bold">**</span>The total elapsed time, in seconds, is subtracted from 500 and added to your score, so using the pause button wisely can be beneficial.</p>
+          <div class="warning-items flex flex-col items-start mt-2">
+            <p><span class="text-red-500 font-bold">**</span>You cannot input numbers while draft mode is on.</p>
+            <p><span class="text-red-500 font-bold">**</span>Each hint will progressively decrease your score, starting
+              at -3 and subtracting an additional point with each use.</p>
+            <p><span class="text-red-500 font-bold">**</span>Each incorrect cell input will decrease your score by 1
+              point.</p>
+            <p><span class="text-red-500 font-bold">**</span>Each correct cell input will increase your score by 5
+              point.</p>
+            <p><span class="text-red-500 font-bold">**</span>The total elapsed time, in seconds, is subtracted from 500
+              and added to your score, so using the pause button wisely can be beneficial.</p>
           </div>
-         
-            
-  
-         
         </div>
       </div>
       <!-- Sudoku Grid -->
       <div class="flex flex-row justify-center">
         <div class="instructions-items mt-12">
-            <div class="info-items">
-              <p><b>Draft Mode:</b> When enabled, you can add multiple values to each cell as notes.</p>
-              <p>Press <b>Space</b> to toggle Draft Mode while a cell is focused.</p>
-              <p>Press <b>Hint</b> to see cell's value.</p>
-              <p>Press <b class="bg-red-500 p-1 rounded text-white">Undo</b> to clear the cell.</p>
-              <p>Press <b class="bg-gray-400 p-1 rounded text-white">Clear Board</b> to clear all cells.</p>
-              <p>Press <b class="bg-green-500 p-1 rounded text-white">New Game</b> to start a new game.</p>
-              <p>Press <b class="bg-blue-500 p-1 rounded text-white">Pause</b> to pause the timer.</p>
-              <p>Use the <b>Arrow Keys</b> to navigate the cells.</p>
-            </div>
+          <div class="info-items items-start">
+            <p><b>Draft Mode:</b> When enabled, you can add multiple values to each cell as notes.</p>
+            <p>Press <b>Space</b> to toggle Draft Mode while a cell is focused.</p>
+            <p>Press <b>Hint</b> to see cell's value while a cell is focused.</p>
+            <p>Press <b class="bg-red-500 p-1 rounded text-white">Undo</b> to clear the cell.</p>
+            <p>Press <b class="bg-gray-400 p-1 rounded text-white">Clear Board</b> to clear all cells.</p>
+            <p>Press <b class="bg-green-500 p-1 rounded text-white">New Game</b> to start a new game.</p>
+            <p>Press <b class="bg-blue-500 p-1 rounded text-white">Pause</b> to pause the timer.</p>
+            <p>Use the <b>Arrow Keys</b> to navigate the cells.</p>
           </div>
+        </div>
         <div class="sudoku-board h-full">
           <div class="container mx-auto mt-4 h-full">
             <div class="flex flex-wrap flex-col h-full">
@@ -489,41 +486,41 @@ export default defineComponent({
 
           <div class="game-levels grid grid-cols-2 gap-x-16 gap-y-8">
             <div class="beginner-board">
-            <h3 class="text-lg font-bold">Beginner</h3>
-            <ol>
-              <li>Player 1</li>
-              <li>Player 2</li>
-              <li>Player 3</li>
-            </ol>
-          </div>
-          <!-- for intermediate top 3 name show as list-->
-          <div class="intermediate-board">
-            <h3 class="text-lg font-bold">Intermediate</h3>
-            <ol>
-              <li>Player 1</li>
-              <li>Player 2</li>
-              <li>Player 3</li>
-            </ol>
-          </div>
-          <!-- for hard top 3 name show as list-->
-          <div class="hard-board
+              <h3 class="text-lg font-bold">Beginner</h3>
+              <ol>
+                <li>Player 1</li>
+                <li>Player 2</li>
+                <li>Player 3</li>
+              </ol>
+            </div>
+            <!-- for intermediate top 3 name show as list-->
+            <div class="intermediate-board">
+              <h3 class="text-lg font-bold">Intermediate</h3>
+              <ol>
+                <li>Player 1</li>
+                <li>Player 2</li>
+                <li>Player 3</li>
+              </ol>
+            </div>
+            <!-- for hard top 3 name show as list-->
+            <div class="hard-board
               ">
-            <h3 class="text-lg font-bold">Hard</h3>
-            <ol>
-              <li>Player 1</li>
-              <li>Player 2</li>
-              <li>Player 3</li>
-            </ol>
-          </div>
-          <!-- for expert top 3 name show as list-->
-          <div class="expert-board">
-            <h3 class="text-lg font-bold">Expert</h3>
-            <ol>
-              <li>Player 1</li>
-              <li>Player 2</li>
-              <li>Player 3</li>
-            </ol>
-          </div>
+              <h3 class="text-lg font-bold">Hard</h3>
+              <ol>
+                <li>Player 1</li>
+                <li>Player 2</li>
+                <li>Player 3</li>
+              </ol>
+            </div>
+            <!-- for expert top 3 name show as list-->
+            <div class="expert-board">
+              <h3 class="text-lg font-bold">Expert</h3>
+              <ol>
+                <li>Player 1</li>
+                <li>Player 2</li>
+                <li>Player 3</li>
+              </ol>
+            </div>
 
           </div>
 
@@ -557,7 +554,7 @@ export default defineComponent({
   @apply flex flex-col justify-items-start gap-x-8 gap-y-2;
 }
 
-.info-items > p {
+.info-items>p {
   @apply mb-1;
 }
 
@@ -574,10 +571,6 @@ li {
   @apply bg-red-500 hover:bg-red-700 text-white w-24 h-10 rounded border-none font-bold text-2xl px-2;
 }
 
-.draft {
-  @apply bg-blue-500 hover:bg-blue-700 text-white w-24 h-10 rounded border-none font-bold text-sm px-2;
-}
-
 .button {
   @apply h-10 px-6 font-semibold rounded-md bg-white text-black;
   @apply border border-slate-700;
@@ -586,5 +579,10 @@ li {
 .button-dark {
   @apply button;
   @apply bg-slate-700 text-white;
+}
+
+.sudoku-board.paused {
+  filter: blur(7px);
+  pointer-events: none;
 }
 </style>
