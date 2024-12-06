@@ -283,6 +283,23 @@ export default defineComponent({
       }, 4000);
     },
 
+    vibrateCells(duration: number): void {
+      const cells = document.querySelectorAll('.cell');
+
+      // Hücrelere "vibrate" sınıfı ekle
+      cells.forEach((cell) => {
+        cell.classList.add('vibrate');
+      });
+
+      // Belirtilen süre sonunda "vibrate" sınıfını kaldır
+      setTimeout(() => {
+        cells.forEach((cell) => {
+          cell.classList.remove('vibrate');
+        });
+      }, duration);
+},
+
+
     judgeBoard(): void {
       let hasWon = true;
 
@@ -308,6 +325,7 @@ export default defineComponent({
         this.isGameFinished = true;
         this.calculateFinalScore();
         this.timer?.stopTimer();
+        this.vibrateCells(3000);
         this.triggerConfetti();
 
       }
@@ -729,5 +747,21 @@ li {
 .sudoku-board.you-won {
   filter: blur(7px);
   pointer-events: none;
+}
+
+@keyframes vibrate {
+  0% { transform: translate(0, 0); }
+  25% { transform: translate(-2px, 2px); }
+  50% { transform: translate(2px, -2px); }
+  75% { transform: translate(-2px, -2px); }
+  100% { transform: translate(0, 0); }
+}
+
+.cell {
+  transition: transform 0.2s ease-in-out;
+}
+
+.cell.vibrate {
+  animation: vibrate 0.3s linear infinite;
 }
 </style>
