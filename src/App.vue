@@ -267,13 +267,12 @@ export default defineComponent({
     },
 
     updatePoints(type: 'hint' | 'error', penalty: number = 0): void {
-      const pointDeduction = type === 'hint' ? 5 + penalty : 1;
+      const pointDeduction = type === 'hint' ? penalty : 1;
       this.userScore -= pointDeduction;
   },
 
     calculateFinalScore(): void {
       this.timePoints = 500 - (this.timer?.totalSeconds || 0);
-      console.log('user score', this.userScore);
     },
 
     triggerConfetti(): void {
@@ -286,12 +285,10 @@ export default defineComponent({
     vibrateCells(duration: number): void {
       const cells = document.querySelectorAll('.cell');
 
-      // Hücrelere "vibrate" sınıfı ekle
       cells.forEach((cell) => {
         cell.classList.add('vibrate');
       });
 
-      // Belirtilen süre sonunda "vibrate" sınıfını kaldır
       setTimeout(() => {
         cells.forEach((cell) => {
           cell.classList.remove('vibrate');
@@ -303,17 +300,10 @@ export default defineComponent({
     judgeBoard(): void {
       let hasWon = true;
 
-      this.userScore += 5;
-
       // checks whole grid to understand if the game is finished
       for (let i = 0; i < this.gridSize; i++) {
         for (let j = 0; j < this.gridSize; j++) {
           const isCellCorrect = this.judgeCell(i, j);
-          if (isCellCorrect) {
-            this.updatePoints('error');
-            this.userScore -= 5;
-            return;
-          }
           
           if (this.grid[i][j].cellValue === null || isCellCorrect) {
             hasWon = false;
@@ -327,11 +317,14 @@ export default defineComponent({
         this.timer?.stopTimer();
         this.vibrateCells(3000);
         this.triggerConfetti();
-
       }
     },
 
-    setGridValue(i: number, j: number, cellState: CellState): void {
+    setGridValue(i: number, j: number, cellState: CellState, cellValue: CellState['cellValue'], isWrong: CellState['isWrong']): void {
+
+      cellState.cellValue = cellValue;
+      cellState.isWrong = isWrong;  
+
       let modifiedRow = this.grid[i].slice(0);
 
       modifiedRow[j] = cellState;
@@ -355,10 +348,7 @@ export default defineComponent({
     },
 
     setGridWrongValue(i: number, j: number, wrong = true): void {
-      this.setGridValue(i, j, {
-        ...this.grid[i][j],
-        isWrong: wrong,
-      });
+      this.setGridValue(i, j, this.grid[i][j], this.grid[i][j].cellValue ?? null, wrong);
     },
 
     quickDraftCell() {
@@ -432,16 +422,23 @@ export default defineComponent({
           this.toggleDraftGridValue(i, j, n);
         }
       } else {
-        this.setGridValue(i, j, {
-          ...cell,
-          cellValue: n,
-        });
+        this.setGridValue(i, j, cell, n, cell.isWrong ?? false);
 
         this.clearDraftGridCell(i, j);
 
         if (n != null) {
           this.updateDraftGridValues(i, j, n);
         }
+
+        if (n === cell.correctValue && cell.pointsReceived === false) {
+          this.userScore += 5;
+          if (cell.setCellPointState) {
+            cell.setCellPointState();
+          }
+        } else if (n !== cell.correctValue && n !== null) {
+          this.updatePoints('error');
+        }
+
         this.judgeBoard();
       }
     },
@@ -453,7 +450,8 @@ export default defineComponent({
       for (let i = 0; i < this.gridSize; i++) {
         for (let j = 0; j < this.gridSize; j++) {
           if (!board[i][j].isPrefilled) {
-            board[i][j] = new CellState(null, 0);
+            const cell = board[i][j];
+            this.setGridValue(i, j, cell, null, false);
             draftGrid[i][j] = new Array(this.gridSize).fill(false);
           }
         }
@@ -593,7 +591,9 @@ export default defineComponent({
                 <span v-if="isGameFinished" class="time-bonus"> + Time Bonus ({{ timePoints }}) = 
                   <span class="text-white bg-blue-900 px-2 rounded">{{ userScore + timePoints }}</span>
                 </span>
-                <span v-if="isGameFinished" class="mx-auto py-2 flex w-fit bg-gradient-to-r from-blue-500 via-teal-500 to-pink-500 bg-clip-text text-3xl box-content font-extrabold text-transparent text-center select-none">Y O U&nbsp;&nbsp;&nbsp;W O N !!!</span>
+                <span v-if="isGameFinished" class="mx-auto py-2 flex w-fit bg-gradient-to-r
+                 from-blue-500 via-teal-500 to-pink-500 bg-clip-text text-3xl box-content
+                 font-extrabold text-transparent text-center select-none">Y O U&nbsp;&nbsp;&nbsp;W O N !!!</span>
               </h2>
               <div class="my-4">
                 <sudoku-grid :grid="grid" :draft-grid="draftGrid">

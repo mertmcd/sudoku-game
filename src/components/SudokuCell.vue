@@ -6,7 +6,7 @@ export default defineComponent({
   name: 'SudokuCell',
   props: {
     cell: {
-      type: Object as PropType<CellState>,
+      type: Object as PropType<Partial<CellState>>,
       required: true,
     },
     draft: {
