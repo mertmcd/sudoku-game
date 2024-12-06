@@ -588,12 +588,18 @@ export default defineComponent({
           <div class="container mx-auto mt-4 h-full">
             <div class="flex flex-wrap flex-col h-full">
               <h2 class="text-blue-900 mx-auto w-fit font-semibold text-2xl">Score: {{ userScore }}
-                <span v-if="isGameFinished" class="time-bonus"> + Time Bonus ({{ timePoints }}) = 
-                  <span class="text-white bg-blue-900 px-2 rounded">{{ userScore + timePoints }}</span>
+                <span v-if="isGameFinished">
+
+                  <span class="time-bonus"> + Time Bonus ({{ timePoints }}) = 
+                    <span class="text-white bg-blue-900 px-2 rounded">{{ userScore + timePoints }}</span>
+                  </span>
+                  <span class="mx-auto py-2 flex w-fit bg-gradient-to-r
+                   from-blue-500 via-teal-500 to-pink-500 bg-clip-text text-3xl box-content
+                   font-extrabold text-transparent text-center select-none">Y O U&nbsp;&nbsp;&nbsp;W O N !!!</span>
+                   <input class="border border-solid border-gray-300 p-2 rounded mr-4" type="text" placeholder="Enter your name" />
+                    <button class="bg-green-500 text-white px-2 hover:bg-green-700 rounded">Submit</button>
+
                 </span>
-                <span v-if="isGameFinished" class="mx-auto py-2 flex w-fit bg-gradient-to-r
-                 from-blue-500 via-teal-500 to-pink-500 bg-clip-text text-3xl box-content
-                 font-extrabold text-transparent text-center select-none">Y O U&nbsp;&nbsp;&nbsp;W O N !!!</span>
               </h2>
               <div class="my-4">
                 <sudoku-grid :grid="grid" :draft-grid="draftGrid">
