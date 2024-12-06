@@ -8,6 +8,7 @@ import CountupTimer from './components/CountupTimer.vue';
 import ShowHint from './components/ShowHint.vue';
 import PuzzleSet from './puzzles/SudokuPuzzleSet.json';
 import PuzzleAnswers from './puzzles/PuzzleAnswers.json';
+import ConfettiEffect from './components/Confetti.vue';
 import './assets/main.css';
 
 type SudokuLevel = 'beginner' | 'intermediate' | 'hard' | 'expert';
@@ -20,17 +21,21 @@ export default defineComponent({
     SudokuGrid,
     CountupTimer,
     ShowHint,
+    ConfettiEffect,
   },
 
   setup() {
     const sudokuLevel = 3;
     const gridSize: GridSize = 9;
+
     const level: Ref<SudokuLevel> = ref('beginner');
     const hint: Ref<InstanceType<typeof ShowHint> | null> = ref(null);
     const timer: Ref<InstanceType<typeof CountupTimer> | null> = ref(null);
     const hintPoints = ref(0);
     const errorPoints = ref(0);
     const puzzleIndex = ref(0);
+    const userScore = ref(0);
+    const showConfetti = ref(false);
     const grid: Ref<CellState[][]> = ref(
       Array(gridSize)
         .fill(null)
@@ -79,6 +84,8 @@ export default defineComponent({
       hintPoints,
       errorPoints,
       puzzleIndex,
+      showConfetti,
+      userScore,
     };
   },
 
@@ -107,13 +114,13 @@ export default defineComponent({
         KeyE: 14,
         KeyF: 15,
       };
+      
+      addEventListener('visibilitychange', () => {
+        if (document.hidden && !this.timer?.isPaused) {
+          this.timer?.pauseTimer();
+        }
+      });
 
-      // addEventListener('visibilitychange', (event) => {
-      //   const timer = this.$refs.timer as InstanceType<typeof CountupTimer>;
-   
-      //   // if (!timer) return;
-      //   (this.$refs.timer as InstanceType<typeof CountupTimer>)?.pauseTimer();
-      // });
 
       window.addEventListener('keydown', (ev) => {
         if (ev.code in ALLOWED_KEYS) {
@@ -174,8 +181,8 @@ export default defineComponent({
 
       this.timer?.resetTimer();
       this.hint?.resetHints();
-      this.hintPoints = 0;
-      this.errorPoints = 0;
+      //this.hintPoints = 0;
+      //this.errorPoints = 0;
 
       const puzzle: number[] = this.generateSudoku(this.level);
       const puzzleSolved: number[] = this.generateSudokuAnswers(this.level);
@@ -254,25 +261,38 @@ export default defineComponent({
       return false;
     },
 
-    updateHintPoints(penalty: number): void {
-      this.hintPoints += penalty;
-      console.log(`Hint Points: ${this.hintPoints}`);
+    updatePoints(type: 'hint' | 'error', penalty: number = 0): void {
+      const pointDeduction = type === 'hint' ? 5 + penalty : 1;
+      this.userScore -= pointDeduction;
+  },
+
+    calculateFinalScore(): void {
+      const timePoints = 500 - (this.timer?.totalSeconds || 0);
+      this.userScore += timePoints;
+      console.log('time points', timePoints);
+      console.log('user score', this.userScore);
     },
 
-    updateErrorPoints(): void {
-      this.errorPoints++;
-      console.log(`Error Points: ${this.errorPoints}`);
+    triggerConfetti(): void {
+      this.showConfetti = true;
+      setTimeout(() => {
+        this.showConfetti = false;
+      }, 4000);
     },
 
     judgeBoard(): void {
       let hasWon = true;
 
+      this.userScore += 5;
+
+      // checks whole grid to understand if the game is finished
       for (let i = 0; i < this.gridSize; i++) {
         for (let j = 0; j < this.gridSize; j++) {
           const isCellCorrect = this.judgeCell(i, j);
           if (isCellCorrect) {
-            this.updateErrorPoints();
-            return
+            this.updatePoints('error');
+            this.userScore -= 5;
+            return;
           }
           
           if (this.grid[i][j].cellValue === null || isCellCorrect) {
@@ -282,7 +302,10 @@ export default defineComponent({
       }
 
       if (hasWon) {
-        this.timer?.pauseTimer();
+        this.calculateFinalScore();
+        this.timer?.stopTimer();
+        this.triggerConfetti();
+
       }
     },
 
@@ -397,7 +420,6 @@ export default defineComponent({
         if (n != null) {
           this.updateDraftGridValues(i, j, n);
         }
-
         this.judgeBoard();
       }
     },
@@ -424,6 +446,7 @@ export default defineComponent({
 
 <template>
   <div class="container m-auto">
+    <confetti-effect v-if="showConfetti" />
     <h1
       class="mx-auto py-2 flex w-fit bg-gradient-to-r from-blue-500 via-teal-500 to-pink-500 bg-clip-text text-3xl box-content font-extrabold text-transparent text-center select-none"
     >
@@ -471,7 +494,7 @@ export default defineComponent({
             :selected="selected"
             :grid="grid"
             @judge-board="judgeBoard"
-            @update-hint-points="updateHintPoints"
+            @update-hint-points="updatePoints('hint', $event)"
             ref='hint'
             />
 
@@ -544,6 +567,7 @@ export default defineComponent({
         <div class="sudoku-board h-full">
           <div class="container mx-auto mt-4 h-full">
             <div class="flex flex-wrap flex-col h-full">
+              <h2 class="text-white mx-auto px-2 rounded w-fit font-semibold text-2xl bg-blue-900">Score: {{ userScore }}</h2>
               <div class="my-4">
                 <sudoku-grid :grid="grid" :draft-grid="draftGrid">
                   <template v-slot.default="{ i, j, draft }">
