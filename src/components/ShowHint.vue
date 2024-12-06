@@ -23,9 +23,6 @@ export default defineComponent({
     const hintPenalty = ref<number>(3);
 
     const toggleHint = (): void => {
-
-      debugger;
-
       if (remainingHints.value === 0) {
         return;
       }

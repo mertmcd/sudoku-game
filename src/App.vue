@@ -6,8 +6,8 @@ import SudokuCell from './components/SudokuCell.vue';
 import SudokuGrid from './components/SudokuGrid.vue';
 import CountupTimer from './components/CountupTimer.vue';
 import ShowHint from './components/ShowHint.vue';
-import PuzzleSet from './models/SudokuPuzzleSet.json';
-import PuzzleAnswers from './models/PuzzleAnswers.json';
+import PuzzleSet from './puzzles/SudokuPuzzleSet.json';
+import PuzzleAnswers from './puzzles/PuzzleAnswers.json';
 import './assets/main.css';
 
 type SudokuLevel = 'beginner' | 'intermediate' | 'hard' | 'expert';
@@ -282,7 +282,7 @@ export default defineComponent({
       }
 
       if (hasWon) {
-        alert('Yay you won!');
+        this.timer?.pauseTimer();
       }
     },
 
@@ -364,7 +364,6 @@ export default defineComponent({
     },
 
     assignCell(n: number | null): void {
-      debugger;
       const i = this.selected[0];
       const j = this.selected[1];
 
@@ -498,12 +497,12 @@ export default defineComponent({
             </p>
             <p>
               <span class="text-red-500 font-bold">**</span>Each correct cell
-              input will increase your score by 5 point.
+              input will increase your score by 5 points.
             </p>
             <p>
               <span class="text-red-500 font-bold">**</span>The total elapsed
               time, in seconds, is subtracted from 500 and added to your score,
-              so using the pause button wisely can be beneficial.
+              so use the pause button if you need to take a break.
             </p>
           </div>
         </div>
@@ -691,6 +690,11 @@ li {
 }
 
 .sudoku-board.paused {
+  filter: blur(7px);
+  pointer-events: none;
+}
+
+.sudoku-board.you-won {
   filter: blur(7px);
   pointer-events: none;
 }
