@@ -183,6 +183,9 @@ export default defineComponent({
     newGame(): void {
       this.clearAll();
 
+      this.isGameFinished = false;
+      this.userScore = 0;
+      this.timePoints = 0;
       this.timer?.resetTimer();
       this.hint?.resetHints();
 
@@ -568,8 +571,10 @@ export default defineComponent({
         <div class="sudoku-board h-full">
           <div class="container mx-auto mt-4 h-full">
             <div class="flex flex-wrap flex-col h-full">
-              <h2 class="text-white mx-auto px-2 rounded w-fit font-semibold text-2xl bg-blue-900">Score: {{ userScore }}
-                <span v-if="isGameFinished" class="time-bonus"> + Time Bonus ({{ timePoints }}) = {{ userScore + timePoints }}</span>
+              <h2 class="text-blue-900 mx-auto w-fit font-semibold text-2xl">Score: {{ userScore }}
+                <span v-if="isGameFinished" class="time-bonus"> + Time Bonus ({{ timePoints }}) = 
+                  <span class="text-white bg-blue-900 px-2 rounded">{{ userScore + timePoints }}</span>
+                </span>
               </h2>
               <div class="my-4">
                 <sudoku-grid :grid="grid" :draft-grid="draftGrid">
