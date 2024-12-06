@@ -15,6 +15,10 @@ export default {
       return `${formatTime(minutes.value)}:${formatTime(seconds.value)}`;
     });
 
+    const totalSeconds = computed((): number => {
+      return minutes.value * 60 + seconds.value;
+    });
+
     const startTimer = (): void => {
       if (timer.value !== null) {
         clearInterval(timer.value);
@@ -30,6 +34,12 @@ export default {
           }
         }
       }, 1000);
+    };
+
+    const stopTimer = (): void => {
+      if (timer.value !== null) {
+        clearInterval(timer.value);
+      }
     };
 
     const pauseTimer = (): void => {
@@ -68,6 +78,9 @@ export default {
     expose({
       resetTimer,
       pauseTimer,
+      stopTimer,
+      totalSeconds,
+      isPaused,
     });
 
     return {
@@ -76,8 +89,10 @@ export default {
       isPaused,
       time,
       startTimer,
+      stopTimer,
       pauseTimer,
       resetTimer,
+      totalSeconds,
     };
   },
 };
