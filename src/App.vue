@@ -593,6 +593,7 @@ export default defineComponent({
                 <span v-if="isGameFinished" class="time-bonus"> + Time Bonus ({{ timePoints }}) = 
                   <span class="text-white bg-blue-900 px-2 rounded">{{ userScore + timePoints }}</span>
                 </span>
+                <span v-if="isGameFinished" class="mx-auto py-2 flex w-fit bg-gradient-to-r from-blue-500 via-teal-500 to-pink-500 bg-clip-text text-3xl box-content font-extrabold text-transparent text-center select-none">Y O U&nbsp;&nbsp;&nbsp;W O N !!!</span>
               </h2>
               <div class="my-4">
                 <sudoku-grid :grid="grid" :draft-grid="draftGrid">
