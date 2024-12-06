@@ -27,6 +27,8 @@ export default defineComponent({
   setup() {
     const sudokuLevel = 3;
     const gridSize: GridSize = 9;
+    const timePoints = 0;
+    const isGameFinished = false;
 
     const level: Ref<SudokuLevel> = ref('beginner');
     const hint: Ref<InstanceType<typeof ShowHint> | null> = ref(null);
@@ -74,6 +76,7 @@ export default defineComponent({
       draftGrid,
       grid,
       gridSize,
+      timePoints,
       level,
       selected: selectedIndexes,
       isSelecting,
@@ -86,6 +89,7 @@ export default defineComponent({
       puzzleIndex,
       showConfetti,
       userScore,
+      isGameFinished
     };
   },
 
@@ -181,8 +185,6 @@ export default defineComponent({
 
       this.timer?.resetTimer();
       this.hint?.resetHints();
-      //this.hintPoints = 0;
-      //this.errorPoints = 0;
 
       const puzzle: number[] = this.generateSudoku(this.level);
       const puzzleSolved: number[] = this.generateSudokuAnswers(this.level);
@@ -267,9 +269,7 @@ export default defineComponent({
   },
 
     calculateFinalScore(): void {
-      const timePoints = 500 - (this.timer?.totalSeconds || 0);
-      this.userScore += timePoints;
-      console.log('time points', timePoints);
+      this.timePoints = 500 - (this.timer?.totalSeconds || 0);
       console.log('user score', this.userScore);
     },
 
@@ -302,6 +302,7 @@ export default defineComponent({
       }
 
       if (hasWon) {
+        this.isGameFinished = true;
         this.calculateFinalScore();
         this.timer?.stopTimer();
         this.triggerConfetti();
@@ -567,7 +568,9 @@ export default defineComponent({
         <div class="sudoku-board h-full">
           <div class="container mx-auto mt-4 h-full">
             <div class="flex flex-wrap flex-col h-full">
-              <h2 class="text-white mx-auto px-2 rounded w-fit font-semibold text-2xl bg-blue-900">Score: {{ userScore }}</h2>
+              <h2 class="text-white mx-auto px-2 rounded w-fit font-semibold text-2xl bg-blue-900">Score: {{ userScore }}
+                <span v-if="isGameFinished" class="time-bonus"> + Time Bonus ({{ timePoints }}) = {{ userScore + timePoints }}</span>
+              </h2>
               <div class="my-4">
                 <sudoku-grid :grid="grid" :draft-grid="draftGrid">
                   <template v-slot.default="{ i, j, draft }">
