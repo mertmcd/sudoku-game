@@ -5,7 +5,7 @@ import CellState from '../models/CellState';
 
 export default defineComponent({
   name: 'ShowHint',
-  emits: ['judge-board'],
+  emits: ['judge-board', 'update-hint-points'],
 
   props: {
     grid : {
@@ -20,15 +20,15 @@ export default defineComponent({
   setup(props, { emit, expose }) {
     const showHint = ref(false);
     const remainingHints = ref<number>(10);
+    const hintPenalty = ref<number>(3);
 
     const toggleHint = (): void => {
+
+      debugger;
 
       if (remainingHints.value === 0) {
         return;
       }
-
-      showHint.value = !showHint.value;
-      if (showHint.value) remainingHints.value--;
 
       if (!props.selected || props.selected[0] === -1 || props.selected[1] === -1) return;
       
@@ -38,26 +38,29 @@ export default defineComponent({
 
       cell.cellValue = cell.correctValue;
 
+      emit('update-hint-points', hintPenalty.value);
+      hintPenalty.value++;
+      remainingHints.value--;
+
       emit('judge-board');
     };
 
-    const resetRemainingHints = (): void => {
+    const resetHints = (): void => {
       remainingHints.value = 10;
+      hintPenalty.value = 3;
     }
 
     expose({
-      resetRemainingHints,
+      resetHints,
     });
 
     return {
       showHint,
       remainingHints,
       toggleHint,
-      resetRemainingHints
+      resetHints
     };
   },
-
-
 });
 </script>
 

@@ -1,5 +1,5 @@
 <script lang="ts">
-import { ref, computed, defineComponent } from 'vue';
+import { ref, computed, defineComponent, onUpdated } from 'vue';
 import type { Ref } from 'vue';
 import CellState from './models/CellState';
 import SudokuCell from './components/SudokuCell.vue';
@@ -28,6 +28,9 @@ export default defineComponent({
     const level: Ref<SudokuLevel> = ref('beginner');
     const hint: Ref<InstanceType<typeof ShowHint> | null> = ref(null);
     const timer: Ref<InstanceType<typeof CountupTimer> | null> = ref(null);
+    const hintPoints = ref(0);
+    const errorPoints = ref(0);
+    const puzzleIndex = ref(0);
     const grid: Ref<CellState[][]> = ref(
       Array(gridSize)
         .fill(null)
@@ -72,7 +75,10 @@ export default defineComponent({
       draftMode,
       selectedValue,
       hint,
-      timer
+      timer, 
+      hintPoints,
+      errorPoints,
+      puzzleIndex,
     };
   },
 
@@ -154,20 +160,25 @@ export default defineComponent({
 
     generateSudoku(level: SudokuLevel): number[] {
       const puzzleSet = PuzzleSet[level];
-      const randomIndex = Math.floor(Math.random() * puzzleSet.length);
-      return puzzleSet[randomIndex];
+      this.puzzleIndex = Math.floor(Math.random() * puzzleSet.length);
+      return puzzleSet[this.puzzleIndex];
+    },
+
+    generateSudokuAnswers(level: SudokuLevel): number[] {
+      const answerSet = PuzzleAnswers[level];
+      return answerSet[this.puzzleIndex];
     },
 
     newGame(): void {
       this.clearAll();
 
       this.timer?.resetTimer();
-      this.hint?.resetRemainingHints();
-
-      
+      this.hint?.resetHints();
+      this.hintPoints = 0;
+      this.errorPoints = 0;
 
       const puzzle: number[] = this.generateSudoku(this.level);
-      const puzzleSolved: number[] = PuzzleAnswers[this.level][0];
+      const puzzleSolved: number[] = this.generateSudokuAnswers(this.level);
 
       this.grid = Array(this.gridSize)
         .fill(null)
@@ -200,42 +211,11 @@ export default defineComponent({
       let hasError = false;
       const value = this.grid[i][j].cellValue;
 
-      if (value == null) {
-        this.setGridWrongValue(i, j, false); // in case when a cell value is deleted
-        return true;
+      if (value !== null && value !== this.grid[i][j].correctValue) {
+        this.setGridWrongValue(i, j);
+        hasError = true;
       }
-
-      // judge row and column
-      for (let k = 0; k < this.gridSize; k++) {
-        if (value === this.grid[i][k].cellValue && j != k) {
-          hasError = true;
-
-          this.setGridWrongValue(i, k);
-        }
-
-        if (value === this.grid[k][j].cellValue && i != k) {
-          hasError = true;
-          this.setGridWrongValue(k, j);
-        }
-      }
-      // judge current square
-      const startI = i - (i % this.sudokuLevel);
-      const startJ = j - (j % this.sudokuLevel);
-
-      const endI = startI + this.sudokuLevel;
-      const endJ = startJ + this.sudokuLevel;
-
-      for (let k = startI; k < endI; k++) {
-        for (let m = startJ; m < endJ; m++) {
-          if (i == k && j == m) continue; // skip the current cell
-
-          if (value === this.grid[k][m].cellValue) {
-            hasError = true;
-            this.setGridWrongValue(k, m);
-          }
-        }
-      }
-
+     
       return hasError;
     },
 
@@ -274,12 +254,27 @@ export default defineComponent({
       return false;
     },
 
+    updateHintPoints(penalty: number): void {
+      this.hintPoints += penalty;
+      console.log(`Hint Points: ${this.hintPoints}`);
+    },
+
+    updateErrorPoints(): void {
+      this.errorPoints++;
+      console.log(`Error Points: ${this.errorPoints}`);
+    },
+
     judgeBoard(): void {
       let hasWon = true;
 
       for (let i = 0; i < this.gridSize; i++) {
         for (let j = 0; j < this.gridSize; j++) {
           const isCellCorrect = this.judgeCell(i, j);
+          if (isCellCorrect) {
+            this.updateErrorPoints();
+            return
+          }
+          
           if (this.grid[i][j].cellValue === null || isCellCorrect) {
             hasWon = false;
           }
@@ -314,7 +309,7 @@ export default defineComponent({
       this.draftGrid[i] = row;
     },
 
-    setGridWrongValue(i: number, j: number, wrong = true) {
+    setGridWrongValue(i: number, j: number, wrong = true): void {
       this.setGridValue(i, j, {
         ...this.grid[i][j],
         isWrong: wrong,
@@ -369,6 +364,7 @@ export default defineComponent({
     },
 
     assignCell(n: number | null): void {
+      debugger;
       const i = this.selected[0];
       const j = this.selected[1];
 
@@ -476,6 +472,7 @@ export default defineComponent({
             :selected="selected"
             :grid="grid"
             @judge-board="judgeBoard"
+            @update-hint-points="updateHintPoints"
             ref='hint'
             />
 
