@@ -1,5 +1,44 @@
-# Vue 3 + TypeScript + Vite
+# Sudoku Game Client
 
-This template should help get you started developing with Vue 3 and TypeScript in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+This is the client-side application for the Sudoku Game project. It is built using modern web technologies to provide an interactive and user-friendly interface for playing Sudoku.
 
-Learn more about the recommended Project Setup and IDE Support in the [Vue Docs TypeScript Guide](https://vuejs.org/guide/typescript/overview.html#project-setup).
+## Table of Contents
+
+- [Installation](#installation)
+- [Usage](#usage)
+- [Features](#features)
+- [Contributing](#contributing)
+- [License](#license)
+
+## Installation
+
+To get started with the Sudoku Game client, follow these steps:
+
+1. Clone the repository:
+    ```bash
+    git clone https://github.com/mertmcd/sudoku-game.git
+    ```
+2. Navigate to the client directory:
+    ```bash
+    cd sudoku-game/client
+    ```
+3. Install the dependencies:
+    ```bash
+    npm install
+    ```
+
+## Usage
+
+To run the client application locally, use the following command:
+```bash
+npm run dev
+```
+This will start the development server and you can access the application in your web browser at `http://localhost:5173`.
+
+## Features
+
+- Interactive Sudoku grid
+- Multiple difficulty levels
+- Timer to track your progress
+- Hint system to assist with solving
+- Responsive design for mobile and desktop
